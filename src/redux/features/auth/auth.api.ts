@@ -20,6 +20,14 @@ export const authApi = baseApi.injectEndpoints({
       }),
     }),
 
+    getMe: builder.query<TResponse<TUser>, void>({
+      query: () => ({
+        url: "/users/me",
+        method: "GET",
+      }),
+      providesTags: ["User"],
+    }),
+
     login: builder.mutation<TResponse<TLoginResponse>, TLoginRequest>({
       query: (data) => ({
         url: "/auth/login",
@@ -70,4 +78,5 @@ export const {
   useForgetPasswordMutation,
   useLogoutMutation,
   useResetPasswordMutation,
+  useGetMeQuery,
 } = authApi;

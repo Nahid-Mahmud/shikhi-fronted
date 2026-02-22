@@ -8,6 +8,7 @@ import { z } from "zod";
 import { useRegisterMutation } from "@/redux/features/auth/auth.api";
 import { TError } from "@/types";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const signupSchema = z
   .object({
@@ -78,6 +79,7 @@ export default function Signup() {
         }
       });
       setErrors(fieldErrors);
+      toast.error("Please fix the validation errors");
       return;
     }
 
@@ -89,14 +91,16 @@ export default function Signup() {
       }).unwrap();
 
       if (response.success) {
-        alert("Account created successfully!");
+        toast.success("Account created successfully!");
         router.push("/auth/login");
       }
     } catch (err) {
       const error = err as TError;
+      const errorMessage = error.data?.message || "Something went wrong during signup";
       setErrors({
-        form: error.data?.message || "Something went wrong during signup",
+        form: errorMessage,
       });
+      toast.error(errorMessage);
     }
   };
 

@@ -18,7 +18,10 @@ export type TLoginRequest = {
 };
 
 export type TLoginResponse = {
-  user: TUser;
+  role: string;
+  id: string;
+  status: string;
+  email: string;
 };
 
 export type TForgetPasswordResponse = {

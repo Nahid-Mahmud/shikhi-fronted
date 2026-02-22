@@ -2,11 +2,30 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useGetMeQuery, useLogoutMutation } from "@/redux/features/auth/auth.api";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { data: userData, isLoading: isUserLoading } = useGetMeQuery();
+  const [logout] = useLogoutMutation();
+  const router = useRouter();
+
+  const user = userData?.data;
+
+  const handleLogout = async () => {
+    try {
+      await logout().unwrap();
+      toast.success("Logged out successfully");
+      router.push("/auth/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Logout failed. Please try again.");
+    }
+  };
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -40,14 +59,41 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Auth Buttons */}
+          {/* Auth Buttons / User Profile */}
           <div className="hidden sm:flex items-center space-x-3">
-            <Button variant="ghost" asChild>
-              <Link href="/auth/login">Login</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/auth/signup">Sign Up</Link>
-            </Button>
+            {isUserLoading ? (
+              <div className="h-9 w-20 animate-pulse bg-muted rounded-md"></div>
+            ) : user ? (
+              <div className="flex items-center space-x-4">
+                <Link
+                  href="/profile"
+                  className="flex items-center space-x-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+                >
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <UserIcon size={18} className="text-primary" />
+                  </div>
+                  <span className="hidden lg:inline-block">{user.name}</span>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-muted-foreground hover:text-red-500"
+                >
+                  <LogOut size={18} className="mr-2" />
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <>
+                <Button variant="ghost" asChild>
+                  <Link href="/auth/login">Login</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/auth/signup">Sign Up</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -70,12 +116,37 @@ export function Header() {
               </Link>
             ))}
             <div className="flex flex-col space-y-2 pt-2 border-t border-border">
-              <Button variant="outline" asChild className="w-full">
-                <Link href="/auth/login">Login</Link>
-              </Button>
-              <Button asChild className="w-full">
-                <Link href="/auth/signup">Sign Up</Link>
-              </Button>
+              {isUserLoading ? (
+                <div className="h-20 w-full animate-pulse bg-muted rounded-md"></div>
+              ) : user ? (
+                <>
+                  <Link
+                    href="/profile"
+                    className="flex items-center space-x-2 px-2 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <UserIcon size={18} />
+                    <span>{user.name}</span>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    onClick={handleLogout}
+                    className="w-full justify-start text-red-500 border-red-500/20 hover:bg-red-50"
+                  >
+                    <LogOut size={18} className="mr-2" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" asChild className="w-full" onClick={() => setIsMenuOpen(false)}>
+                    <Link href="/auth/login">Login</Link>
+                  </Button>
+                  <Button asChild className="w-full" onClick={() => setIsMenuOpen(false)}>
+                    <Link href="/auth/signup">Sign Up</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </nav>
         )}

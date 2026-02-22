@@ -1,11 +1,26 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
+import { CloudCog, Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useLoginMutation } from "@/redux/features/auth/auth.api";
+import { TError } from "@/types";
+import { z } from "zod";
+import { toast } from "sonner";
+import setSession from "@/service/setSession";
+
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+  rememberMe: z.boolean().optional(),
+});
 
 export default function Login() {
+  const router = useRouter();
+  const [login, { isLoading }] = useLoginMutation();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -25,31 +40,49 @@ export default function Login() {
     }
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    }
-
-    return newErrors;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors = validateForm();
 
-    if (Object.keys(newErrors).length === 0) {
-      console.log("Login attempt:", formData);
-      alert("Login successful! Redirecting to dashboard...");
-    } else {
-      setErrors(newErrors);
+    const result = loginSchema.safeParse(formData);
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const path = issue.path[0];
+        if (typeof path === "string") {
+          fieldErrors[path] = issue.message;
+        }
+      });
+      setErrors(fieldErrors);
+      toast.error("Please fix the validation errors");
+      return;
+    }
+
+    try {
+      const response = await login({
+        email: formData.email,
+        password: formData.password,
+      }).unwrap();
+
+      console.log(response);
+      setSession({
+        id: response.data.id,
+        role: response.data.role,
+        status: response.data.status,
+        email: response.data.email,
+      });
+
+      if (response.success) {
+        toast.success("Login successful! Redirecting...");
+        router.push("/");
+      }
+    } catch (err) {
+      const error = err as TError;
+      const errorMessage = error.data?.message || "Something went wrong during login";
+      setErrors({
+        form: errorMessage,
+      });
+      toast.error(errorMessage);
     }
   };
 
@@ -66,6 +99,11 @@ export default function Login() {
 
             {/* Login Form */}
             <div className="rounded-lg border border-border bg-card p-8 space-y-6">
+              {errors.form && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm text-center">
+                  {errors.form}
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Email */}
                 <div>
@@ -78,10 +116,10 @@ export default function Login() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                    className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-geist"
                     placeholder="john@example.com"
                   />
-                  {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
+                  {errors.email && <p className="text-sm text-red-500 mt-1 font-geist">{errors.email}</p>}
                 </div>
 
                 {/* Password */}
@@ -96,7 +134,7 @@ export default function Login() {
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all pr-10"
+                      className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all pr-10 font-geist"
                       placeholder="••••••••"
                     />
                     <button
@@ -107,7 +145,7 @@ export default function Login() {
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
-                  {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password}</p>}
+                  {errors.password && <p className="text-sm text-red-500 mt-1 font-geist">{errors.password}</p>}
                 </div>
 
                 {/* Remember Me & Forgot Password */}
@@ -128,8 +166,15 @@ export default function Login() {
                 </div>
 
                 {/* Submit Button */}
-                <Button type="submit" className="w-full text-base font-semibold">
-                  Sign In
+                <Button type="submit" className="w-full text-base font-semibold" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing In...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </form>
 
@@ -158,7 +203,7 @@ export default function Login() {
             <div className="text-center space-y-3">
               <p className="text-muted-foreground">
                 Don&apos;t have an account?{" "}
-                <Link href="/signup" className="text-primary hover:underline font-semibold">
+                <Link href="/auth/signup" className="text-primary hover:underline font-semibold">
                   Create one now
                 </Link>
               </p>
