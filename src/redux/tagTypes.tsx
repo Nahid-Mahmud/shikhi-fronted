@@ -1,1 +1,1 @@
-export const tagTypes = ['User', 'serviceOfferingsMasterList', 'specialists'];
+export const tagTypes = ['User',"Category","Course"] as const;
