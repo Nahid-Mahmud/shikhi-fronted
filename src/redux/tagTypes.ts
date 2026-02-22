@@ -4,6 +4,7 @@ export const tagTypes = [
 	"Course",
 	"Enrollment",
 	"Lesson",
-	"LessonProgress",
-	"Payment",
+	  "LessonProgress",
+	  "Payment",
+	  "Stats",
 ] as const;
