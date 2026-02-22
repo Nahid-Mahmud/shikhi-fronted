@@ -12,7 +12,7 @@ interface SessionData {
 
 const setSession = async (data: SessionData) => {
   const token = jwt.sign(data, process.env.JWT_SECRET!, {
-    expiresIn: "7d",
+    expiresIn: "30d",
   });
   (await cookies()).set("session", token);
 };
