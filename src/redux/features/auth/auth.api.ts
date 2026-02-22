@@ -63,6 +63,7 @@ export const authApi = baseApi.injectEndpoints({
           await queryFulfilled;
           // Reset entire API state to clear all cached data
           dispatch(baseApi.util.resetApiState());
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           // Even if logout fails, clear all cache
           dispatch(baseApi.util.resetApiState());
