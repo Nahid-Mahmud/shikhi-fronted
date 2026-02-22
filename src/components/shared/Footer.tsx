@@ -40,11 +40,9 @@ export function Footer() {
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/10">
-                <span className="text-primary-foreground font-black text-xl italic tracking-tighter">TP</span>
+                <span className="text-primary-foreground font-black text-xl italic tracking-tighter">S</span>
               </div>
-              <span className="font-black text-2xl tracking-tight text-foreground">
-                Talent<span className="text-primary">Pull</span>
-              </span>
+              <span className="font-black text-2xl tracking-tight text-foreground">Shikhi</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Empowering the next generation of professional talent with world-class education and career resources.

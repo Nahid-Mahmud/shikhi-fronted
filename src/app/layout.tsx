@@ -27,9 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <ReduxProvider>
-        <AuthLayout>
-          <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
-        </AuthLayout>
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
       </ReduxProvider>
     </html>
   );

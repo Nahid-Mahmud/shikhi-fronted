@@ -3,9 +3,31 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { z } from "zod";
+import { useRegisterMutation } from "@/redux/features/auth/auth.api";
+import { TError } from "@/types";
+import { useRouter } from "next/navigation";
+
+const signupSchema = z
+  .object({
+    fullName: z.string().min(2, "Full name must be at least 2 characters"),
+    email: z.string().email("Please enter a valid email"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string(),
+    agreeTerms: z.literal(true, {
+      message: "You must agree to the terms and conditions",
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 export default function Signup() {
+  const router = useRouter();
+  const [register, { isLoading }] = useRegisterMutation();
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -42,45 +64,39 @@ export default function Signup() {
     }
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required";
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-
-    if (!formData.agreeTerms) {
-      newErrors.agreeTerms = "You must agree to the terms and conditions";
-    }
-
-    return newErrors;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors = validateForm();
 
-    if (Object.keys(newErrors).length === 0) {
-      console.log("Form submitted:", formData);
-      alert("Account created successfully! Redirecting to dashboard...");
-    } else {
-      setErrors(newErrors);
+    const result = signupSchema.safeParse(formData);
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const path = issue.path[0];
+        if (typeof path === "string") {
+          fieldErrors[path] = issue.message;
+        }
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    try {
+      const response = await register({
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+      }).unwrap();
+
+      if (response.success) {
+        alert("Account created successfully!");
+        router.push("/auth/login");
+      }
+    } catch (err) {
+      const error = err as TError;
+      setErrors({
+        form: error.data?.message || "Something went wrong during signup",
+      });
     }
   };
 
@@ -100,6 +116,11 @@ export default function Signup() {
 
             {/* Signup Form */}
             <div className="rounded-lg border border-border bg-card p-8 space-y-6">
+              {errors.form && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm text-center">
+                  {errors.form}
+                </div>
+              )}
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Full Name */}
                 <div>
@@ -231,41 +252,27 @@ export default function Signup() {
                 {errors.agreeTerms && <p className="text-sm text-red-500">{errors.agreeTerms}</p>}
 
                 {/* Submit Button */}
-                <Button type="submit" className="w-full text-base font-semibold">
-                  Create Account
+                <Button type="submit" className="w-full text-base font-semibold" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
               </form>
-
-              {/* Divider */}
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-card text-muted-foreground">or</span>
-                </div>
-              </div>
-
-              {/* Social Signup */}
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="w-full">
-                  Google
-                </Button>
-                <Button variant="outline" className="w-full">
-                  GitHub
-                </Button>
-              </div>
             </div>
 
             {/* Login Link */}
             <div className="text-center space-y-3">
               <p className="text-muted-foreground">
                 Already have an account?{" "}
-                <Link href="/login" className="text-primary hover:underline font-semibold">
+                <Link href="/auth/login" className="text-primary hover:underline font-semibold">
                   Sign in
                 </Link>
               </p>
-              <p className="text-xs text-muted-foreground">No credit card required. 7-day free trial on all plans.</p>
             </div>
           </div>
         </div>
