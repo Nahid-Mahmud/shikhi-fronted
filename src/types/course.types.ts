@@ -36,3 +36,31 @@ export interface IUpdateCourseRequest {
   status?: string;
   categoryId?: string;
 }
+
+// Frontend/UI specific types for course details
+export interface ICourseLesson {
+  id: string;
+  title: string;
+  order: number;
+  type: "video" | "text" | string;
+}
+
+export interface IInstructor {
+  id: string;
+  name: string;
+}
+
+export interface ICourseDetail {
+  slug: string;
+  title: string;
+  description?: string;
+  thumbnail?: string;
+  price: number;
+  isFree: boolean;
+  level?: string;
+  students?: string;
+  rating?: number;
+  instructor: IInstructor;
+  category?: { name: string };
+  lessons: ICourseLesson[];
+}

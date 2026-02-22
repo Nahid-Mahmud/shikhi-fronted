@@ -139,11 +139,11 @@ export default function Home() {
       <main className="w-full">
         {/* Hero Section */}
         <section className="relative pt-32 pb-40 px-4 sm:px-6 lg:px-8 overflow-hidden">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,oklch(0.5_0.25_260_/_0.1),transparent_50%)]" />
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,oklch(0.5_0.25_260/0.1),transparent_50%)]" />
           <div className="mx-auto max-w-6xl relative">
             <div className="text-center space-y-10">
               <div className="space-y-6">
-                <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black text-foreground leading-[1] tracking-tight text-balance">
+                <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black text-foreground leading-none tracking-tight text-balance">
                   Master Your Career <br />
                   <span className="text-gradient">With Shikhi</span>
                 </h1>
