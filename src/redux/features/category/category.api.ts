@@ -6,7 +6,7 @@ export const categoryApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createCategory: builder.mutation<TResponse<ICategory>, ICreateCategoryRequest>({
       query: (data) => ({
-        url: "/category",
+        url: "/categories",
         method: "POST",
         body: data,
       }),
@@ -14,21 +14,21 @@ export const categoryApi = baseApi.injectEndpoints({
     }),
     getAllCategories: builder.query<TResponse<ICategory[]>, void>({
       query: () => ({
-        url: "/category",
+        url: "/categories",
         method: "GET",
       }),
       providesTags: ["Category"],
     }),
     getCategoryById: builder.query<TResponse<ICategory>, string>({
       query: (id) => ({
-        url: `/category/${id}`,
+        url: `/categories/${id}`,
         method: "GET",
       }),
       providesTags: ["Category"],
     }),
     updateCategory: builder.mutation<TResponse<ICategory>, { id: string; body: IUpdateCategoryRequest }>({
       query: ({ id, body }) => ({
-        url: `/category/${id}`,
+        url: `/categories/${id}`,
         method: "PATCH",
         body,
       }),
@@ -36,7 +36,7 @@ export const categoryApi = baseApi.injectEndpoints({
     }),
     deleteCategory: builder.mutation<TResponse<null>, string>({
       query: (id) => ({
-        url: `/category/${id}`,
+        url: `/categories/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Category"],
