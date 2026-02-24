@@ -6,7 +6,7 @@ export const lessonApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createLesson: builder.mutation<TResponse<ILesson>, FormData>({
       query: (data) => ({
-        url: "/lesson",
+        url: "/lessons",
         method: "POST",
         body: data,
       }),
@@ -14,7 +14,7 @@ export const lessonApi = baseApi.injectEndpoints({
     }),
     getAllLessons: builder.query<TResponse<ILesson[]>, string | void>({
       query: (courseId) => ({
-        url: "/lesson",
+        url: "/lessons",
         method: "GET",
         params: courseId ? { courseId } : {},
       }),
@@ -22,14 +22,14 @@ export const lessonApi = baseApi.injectEndpoints({
     }),
     getLessonById: builder.query<TResponse<ILesson>, string>({
       query: (id) => ({
-        url: `/lesson/${id}`,
+        url: `/lessons/${id}`,
         method: "GET",
       }),
       providesTags: ["Lesson"],
     }),
     updateLesson: builder.mutation<TResponse<ILesson>, { id: string; body: FormData }>({
       query: ({ id, body }) => ({
-        url: `/lesson/${id}`,
+        url: `/lessons/${id}`,
         method: "PATCH",
         body,
       }),
@@ -37,7 +37,7 @@ export const lessonApi = baseApi.injectEndpoints({
     }),
     deleteLesson: builder.mutation<TResponse<null>, string>({
       query: (id) => ({
-        url: `/lesson/${id}`,
+        url: `/lessons/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Lesson"],

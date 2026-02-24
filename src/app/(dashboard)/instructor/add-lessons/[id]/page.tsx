@@ -21,6 +21,12 @@ import { toast } from "sonner";
 import { Loader2, Plus, Pencil, Trash2, Video, FileText, ChevronRight, LayoutList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { DeleteConfirmation } from "@/components/ui/DeleteConfirmation";
+import dynamic from "next/dynamic";
+
+const MDXEditor = dynamic(() => import("@/components/ui/mdx-editor"), {
+  ssr: false,
+});
 
 export default function AddLessons() {
   const { id } = useParams() as { id: string };
@@ -33,6 +39,11 @@ export default function AddLessons() {
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [lessonType, setLessonType] = useState<LessonType>(LessonType.text);
   const [videoFile, setVideoFile] = useState<File | null>(null);
+
+  // Delete State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [lessonToDeleteId, setLessonToDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const course = courseData?.data;
   const lessons = useMemo(() => {
@@ -90,13 +101,24 @@ export default function AddLessons() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = async (lessonId: string) => {
+  const handleDelete = (lessonId: string) => {
+    setLessonToDeleteId(lessonId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!lessonToDeleteId) return;
+    setIsDeleting(true);
     try {
-      await deleteLesson(lessonId).unwrap();
+      await deleteLesson(lessonToDeleteId).unwrap();
       toast.success("Lesson deleted successfully");
-      if (editingLessonId === lessonId) resetForm();
+      if (editingLessonId === lessonToDeleteId) resetForm();
     } catch (error) {
       toast.error("Failed to delete lesson");
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+      setLessonToDeleteId(null);
     }
   };
 
@@ -356,13 +378,10 @@ export default function AddLessons() {
                       <Label htmlFor="content" className="sr-only">
                         Content
                       </Label>
-                      <Textarea
-                        id="content"
-                        name="content"
-                        placeholder="Type or paste your lesson content here. Supports plain text and formatted descriptions."
-                        value={formData.content}
-                        onChange={handleInputChange}
-                        className="min-h-[300px] rounded-xl border-primary/20 font-sans p-4 leading-relaxed"
+                      <MDXEditor
+                        markdown={formData.content}
+                        onChange={(markdown) => setFormData((prev) => ({ ...prev, content: markdown }))}
+                        placeholder="Type or paste your lesson content here. Supports Markdown formatting."
                       />
                     </div>
                   ) : (
@@ -496,6 +515,18 @@ export default function AddLessons() {
           </Card>
         </div>
       </div>
+
+      <DeleteConfirmation
+        open={isDeleteModalOpen}
+        isLoading={isDeleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setLessonToDeleteId(null);
+        }}
+        title="Delete Lesson"
+        description="Are you sure you want to delete this lesson? All associated content will be permanently removed."
+      />
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
