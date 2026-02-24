@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useState } from "react";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { z } from "zod";
 import { useRegisterMutation } from "@/redux/features/auth/auth.api";
@@ -16,6 +17,9 @@ const signupSchema = z
     email: z.string().email("Please enter a valid email"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
+    role: z.enum(["student", "instructor"], {
+      message: "Role is required",
+    }),
     agreeTerms: z.literal(true, {
       message: "You must agree to the terms and conditions",
     }),
@@ -34,6 +38,7 @@ export default function Signup() {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "student",
     agreeTerms: false,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -50,9 +55,13 @@ export default function Signup() {
     return strength;
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    const newValue = type === "checkbox" ? checked : value;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    let newValue: string | boolean = value;
+    if (type === "checkbox") {
+      // Type narrowing for checkbox
+      newValue = (e.target as HTMLInputElement).checked;
+    }
 
     setFormData((prev) => ({ ...prev, [name]: newValue }));
 
@@ -88,6 +97,7 @@ export default function Signup() {
         name: formData.fullName,
         email: formData.email,
         password: formData.password,
+        role: formData.role,
       }).unwrap();
 
       if (response.success) {
@@ -230,6 +240,29 @@ export default function Signup() {
                     </button>
                   </div>
                   {errors.confirmPassword && <p className="text-sm text-red-500 mt-1">{errors.confirmPassword}</p>}
+                </div>
+
+                {/* Role Dropdown */}
+                <div>
+                  <label htmlFor="role" className="block text-sm font-medium text-foreground mb-2">
+                    SignUp AS
+                  </label>
+                  <Select
+                    value={formData.role}
+                    onValueChange={(value) => {
+                      setFormData((prev) => ({ ...prev, role: value }));
+                      if (errors.role) setErrors((prev) => ({ ...prev, role: "" }));
+                    }}
+                  >
+                    <SelectTrigger className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="instructor">Instructor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.role && <p className="text-sm text-red-500 mt-1">{errors.role}</p>}
                 </div>
 
                 {/* Terms Checkbox */}

@@ -10,6 +10,7 @@ export type TRegisterRequest = {
   email: string;
   name: string;
   password: string;
+  role?: string;
 };
 
 export type TLoginRequest = {
