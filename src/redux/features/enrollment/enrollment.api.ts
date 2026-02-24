@@ -7,12 +7,13 @@ import {
   IGetEnrollmentsFilters,
   IEnrollmentListResponse,
 } from "@/types/enrollment.types";
+import { ICourse } from "@/types/course.types";
 
 export const enrollmentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     enrollStudent: builder.mutation<TResponse<IEnrollment>, ICreateEnrollmentRequest>({
       query: (data) => ({
-        url: "/enrollment",
+        url: "/enrollments",
         method: "POST",
         body: data,
       }),
@@ -20,22 +21,22 @@ export const enrollmentApi = baseApi.injectEndpoints({
     }),
     updateEnrollmentStatus: builder.mutation<TResponse<IEnrollment>, IUpdateEnrollmentStatusRequest>({
       query: (data) => ({
-        url: `/enrollment/${data.enrollmentId}/status`,
+        url: `/enrollments/${data.enrollmentId}/status`,
         method: "PATCH",
         body: { status: data.status },
       }),
       invalidatesTags: ["Enrollment"],
     }),
-    getMyEnrolledCourses: builder.query<TResponse<IEnrollment[]>, string>({
-      query: (studentId) => ({
-        url: `/enrollment/my-courses?studentId=${studentId}`,
+    getMyEnrolledCourses: builder.query<TResponse<(IEnrollment & { course: ICourse })[]>, void>({
+      query: () => ({
+        url: `/enrollments/my-courses`,
         method: "GET",
       }),
       providesTags: ["Enrollment"],
     }),
     getCourseEnrollments: builder.query<TResponse<IEnrollmentListResponse>, IGetEnrollmentsFilters>({
       query: (filters) => ({
-        url: "/enrollment/course-enrollments",
+        url: "/enrollments/course-enrollments",
         method: "GET",
         params: filters,
       }),

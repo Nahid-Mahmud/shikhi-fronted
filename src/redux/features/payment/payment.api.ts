@@ -1,54 +1,45 @@
 import { baseApi } from "@/redux/baseApi";
 import { TResponse } from "@/types/index";
-import { IPayment, ICreatePaymentRequest, IUpdatePaymentRequest } from "@/types/payment.types";
+
+export interface ICheckoutSessionResponse {
+  url?: string;
+  message: string;
+  enrolled?: boolean;
+  enrollment?: unknown;
+}
+
+export interface IConfirmPaymentResponse {
+  success?: boolean;
+  message?: string;
+}
 
 export const paymentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createPayment: builder.mutation<TResponse<IPayment>, ICreatePaymentRequest>({
+    createCheckoutSession: builder.mutation<
+      TResponse<ICheckoutSessionResponse>,
+      { courseId: string }
+    >({
       query: (data) => ({
-        url: "/payment",
+        url: "/payments/create-checkout-session",
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["Payment"],
+      invalidatesTags: ["Payment", "Enrollment"],
     }),
-    getAllPayments: builder.query<TResponse<IPayment[]>, void>({
-      query: () => ({
-        url: "/payment",
-        method: "GET",
+    confirmPayment: builder.mutation<
+      TResponse<IConfirmPaymentResponse>,
+      { sessionId: string }
+    >({
+      query: (data) => ({
+        url: "/payments/confirm-payment",
+        method: "POST",
+        body: data,
       }),
-      providesTags: ["Payment"],
-    }),
-    getPaymentById: builder.query<TResponse<IPayment>, string>({
-      query: (id) => ({
-        url: `/payment/${id}`,
-        method: "GET",
-      }),
-      providesTags: ["Payment"],
-    }),
-    updatePayment: builder.mutation<TResponse<IPayment>, { id: string; body: IUpdatePaymentRequest }>({
-      query: ({ id, body }) => ({
-        url: `/payment/${id}`,
-        method: "PATCH",
-        body,
-      }),
-      invalidatesTags: ["Payment"],
-    }),
-    deletePayment: builder.mutation<TResponse<null>, string>({
-      query: (id) => ({
-        url: `/payment/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["Payment"],
+      invalidatesTags: ["Payment", "Enrollment"],
     }),
   }),
-  overrideExisting: false,
+  overrideExisting: true,
 });
 
-export const {
-  useCreatePaymentMutation,
-  useGetAllPaymentsQuery,
-  useGetPaymentByIdQuery,
-  useUpdatePaymentMutation,
-  useDeletePaymentMutation,
-} = paymentApi;
+export const { useCreateCheckoutSessionMutation, useConfirmPaymentMutation } =
+  paymentApi;

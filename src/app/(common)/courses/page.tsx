@@ -3,94 +3,26 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { useGetAllCoursesQuery } from "@/redux/features/course/course.api";
+import { ICourse } from "@/types/course.types";
 
 export default function AllCourses() {
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState("all");
 
-  const courses = [
-    {
-      title: "Web Development Bootcamp",
-      level: "Beginner",
-      students: "2,450",
-      rating: 4.9,
-      description: "Build modern websites and apps using HTML, CSS, and JavaScript.",
-      slug: "web-dev-bootcamp",
-    },
-    {
-      title: "Data Science Fundamentals",
-      level: "Intermediate",
-      students: "3,120",
-      rating: 4.8,
-      description: "Intro to data analysis, visualization, and machine learning.",
-      slug: "data-science-fundamentals",
-    },
-    {
-      title: "Advanced React Patterns",
-      level: "Advanced",
-      students: "1,890",
-      rating: 4.9,
-      description: "Scale React apps with patterns and performance techniques.",
-      slug: "advanced-react-patterns",
-    },
-    {
-      title: "Python for Everybody",
-      level: "Beginner",
-      students: "4,000",
-      rating: 4.7,
-      description: "Learn Python from scratch and build real projects.",
-      slug: "python-for-everybody",
-    },
-    {
-      title: "Machine Learning Practical",
-      level: "Advanced",
-      students: "980",
-      rating: 4.8,
-      description: "Hands-on ML projects with scikit-learn and TensorFlow.",
-      slug: "ml-practical",
-    },
-    {
-      title: "UI/UX Design Essentials",
-      level: "Intermediate",
-      students: "1,320",
-      rating: 4.6,
-      description: "Design beautiful, usable interfaces with real-world workflows.",
-      slug: "ui-ux-essentials",
-    },
-    {
-      title: "Backend APIs with Node.js",
-      level: "Intermediate",
-      students: "2,100",
-      rating: 4.8,
-      description: "Design and deploy robust REST and GraphQL APIs.",
-      slug: "backend-nodejs",
-    },
-    {
-      title: "DevOps Fundamentals",
-      level: "Advanced",
-      students: "710",
-      rating: 4.5,
-      description: "CI/CD, containers, and deployment best practices.",
-      slug: "devops-fundamentals",
-    },
-    {
-      title: "Product Management 101",
-      level: "Beginner",
-      students: "1,150",
-      rating: 4.4,
-      description: "Roadmaps, discovery, and stakeholder alignment for PMs.",
-      slug: "product-management-101",
-    },
-  ];
+  const { data: coursesResponse, isLoading, isError } = useGetAllCoursesQuery();
+
+  const courses = coursesResponse?.data || [];
 
   const filtered = useMemo(
     () =>
       courses.filter(
-        (c) => c.title.toLowerCase().includes(query.toLowerCase()) && (level === "all" || c.level === level),
+        (c: ICourse) =>
+          c.title.toLowerCase().includes(query.toLowerCase()) &&
+          (level === "all" || (c as any).level === level),
       ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [query, level],
+    [query, level, courses],
   );
 
   return (
@@ -127,33 +59,62 @@ export default function AllCourses() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {filtered.map((course) => (
-                <div
-                  key={course.slug}
-                  className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow"
-                >
-                  <div className="h-40 bg-primary/10 rounded-lg mb-4"></div>
-                  <h3 className="font-semibold text-foreground mb-2">{course.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">{course.description}</p>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                    <span className="px-2 py-1 bg-primary/10 rounded text-primary">{course.level}</span>
-                    <span>⭐ {course.rating}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">{course.students} students</p>
-                    <Link href={`/courses/${course.slug}`}>
-                      <Button size="sm" className="flex items-center gap-2">
-                        View <ArrowRight size={16} />
-                      </Button>
-                    </Link>
-                  </div>
+            {isLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <Loader2 className="animate-spin text-primary" size={48} />
+              </div>
+            ) : isError ? (
+              <div className="text-center text-destructive py-12">
+                <p>Failed to load courses. Please try again later.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {filtered.map((course: ICourse) => (
+                    <div
+                      key={course.id}
+                      className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow"
+                    >
+                      <div
+                        className="h-40 bg-primary/10 rounded-lg mb-4 bg-cover bg-center"
+                        style={{
+                          backgroundImage: course.thumbnail ? `url(${course.thumbnail})` : undefined,
+                        }}
+                      >
+                        {!course.thumbnail && (
+                          <div className="w-full h-full flex items-center justify-center text-primary/40 font-bold">
+                            Course Thumbnail
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-foreground mb-2 line-clamp-1">{course.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        {course.description || "No description available."}
+                      </p>
+                      <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                        <span className="px-2 py-1 bg-primary/10 rounded text-primary">
+                          {(course as any).level || "All Levels"}
+                        </span>
+                        <span>⭐ {(course as any).rating || "4.5"}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                          {(course as any).students || "0"} students
+                        </p>
+                        <Link href={`/courses/${course.id}`}>
+                          <Button size="sm" className="flex items-center gap-2">
+                            View <ArrowRight size={16} />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {filtered.length === 0 && (
-              <p className="text-center text-muted-foreground py-12">No courses found matching your search.</p>
+                {filtered.length === 0 && (
+                  <p className="text-center text-muted-foreground py-12">No courses found matching your search.</p>
+                )}
+              </>
             )}
           </div>
         </section>

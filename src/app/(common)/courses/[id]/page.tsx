@@ -1,44 +1,78 @@
+"use client";
+
+import { useCreateCheckoutSessionMutation } from "@/redux/features/payment/payment.api";
+import { useGetCourseByIdQuery } from "@/redux/features/course/course.api";
+import { useGetMeQuery } from "@/redux/features/auth/auth.api";
 import Link from "next/link";
-import type { ICourseDetail, ICourseLesson } from "../../../../types/course.types";
+import { useParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { BookOpen, Star, Users, Tag, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
+import Image from "next/image";
 
-type Params = { id: string };
+export default function CourseDetails() {
+  const params = useParams<{ id: string }>();
+  const { id } = params;
+  const router = useRouter();
+  const {
+    data: courseRes,
+    isLoading,
+    isError,
+  } = useGetCourseByIdQuery(id, {
+    skip: !id,
+  });
+  const { data: meRes } = useGetMeQuery();
+  const [createCheckoutSession, { isLoading: isCheckingOut }] = useCreateCheckoutSessionMutation();
 
-export default function CourseDetails({ params }: { params: Params }) {
-  const course: ICourseDetail = {
-    slug: params.id,
-    title: "Web Development Bootcamp",
-    description:
-      "Build modern websites and apps using HTML, CSS, and JavaScript. Includes projects, exercises and quizzes.",
-    thumbnail: "",
-    price: 29,
-    isFree: false,
-    level: "Beginner",
-    students: "2,450",
-    rating: 4.9,
-    instructor: { name: "Ayesha Khan", id: "inst_1" },
-    category: { name: "Development" },
-    lessons: [
-      { id: "l1", title: "Introduction & Setup", order: 1, type: "video" } as ICourseLesson,
-      { id: "l2", title: "HTML Basics", order: 2, type: "text" } as ICourseLesson,
-      { id: "l3", title: "CSS Layouts", order: 3, type: "video" } as ICourseLesson,
-      { id: "l4", title: "JavaScript Essentials", order: 4, type: "video" } as ICourseLesson,
-    ],
+  const course = courseRes?.data;
+  const isLoggedIn = !!meRes?.data;
+
+  const handleEnroll = async () => {
+    if (!isLoggedIn) {
+      toast.error("Please log in to enroll in this course.");
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const result = await createCheckoutSession({ courseId: params.id }).unwrap();
+
+      // Free course: enrolled directly
+      if (result.data.enrolled) {
+        toast.success("You have been enrolled in this free course!");
+        router.push("/student/enrolled-course/" + params.id);
+        return;
+      }
+
+      // Paid course: redirect to Stripe checkout
+      if (result.data.url) {
+        window.location.href = result.data.url;
+      }
+    } catch (err: unknown) {
+      const error = err as { data?: { message?: string } };
+      toast.error(error?.data?.message || "Failed to start checkout. Please try again.");
+    }
   };
 
-  if (!course) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError || !course) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
           <h2 className="text-2xl font-bold">Course not found</h2>
-          <p className="text-muted-foreground mt-2">We couldn&apos;t find the course you&apos;re looking for.</p>
-          <div className="mt-6">
-            <Link
-              href="/courses"
-              className="inline-flex items-center px-4 py-2 rounded bg-primary text-primary-foreground"
-            >
-              Back to courses
-            </Link>
-          </div>
+          <p className="text-muted-foreground">We couldn&apos;t find the course you&apos;re looking for.</p>
+          <Link
+            href="/courses"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded bg-primary text-primary-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to courses
+          </Link>
         </div>
       </div>
     );
@@ -48,67 +82,103 @@ export default function CourseDetails({ params }: { params: Params }) {
     <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="rounded-lg bg-card p-6 mb-6">
-              <div className="h-56 bg-primary/10 rounded mb-4" />
-              <h1 className="text-3xl font-black text-foreground mb-2">{course.title}</h1>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                <span className="px-2 py-1 bg-primary/10 rounded text-primary">{course.level}</span>
-                <span>•</span>
-                <span>{course.students} students</span>
-                <span>•</span>
-                <span>⭐ {course.rating}</span>
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Hero */}
+            <div className="rounded-2xl bg-card border p-6 space-y-4">
+              {course.thumbnail ? (
+                <Image
+                  src={course.thumbnail}
+                  alt={course.title}
+                  className="w-full h-56 object-cover rounded-xl"
+                  height={150}
+                  width={150}
+                />
+              ) : (
+                <div className="h-56 bg-linear-to-br from-primary/20 to-primary/5 rounded-xl flex items-center justify-center">
+                  <BookOpen className="h-16 w-16 text-primary/40" />
+                </div>
+              )}
+              <h1 className="text-3xl font-black text-foreground">{course.title}</h1>
+              {course.description && <p className="text-muted-foreground leading-relaxed">{course.description}</p>}
+              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                {course.category && (
+                  <span className="flex items-center gap-1 px-3 py-1 bg-primary/10 rounded-full text-primary font-medium">
+                    <Tag className="h-3 w-3" />
+                    {course.category.name}
+                  </span>
+                )}
+                <span className="px-3 py-1 bg-secondary rounded-full capitalize">{course.status}</span>
               </div>
-              <p className="text-muted-foreground mb-6">{course.description}</p>
             </div>
 
-            <section className="bg-card rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Lessons</h2>
-              <ol className="space-y-3">
-                {course.lessons.map((lesson: ICourseLesson) => (
-                  <li key={lesson.id} className="flex items-start justify-between p-3 rounded hover:bg-primary/5">
-                    <div>
-                      <div className="text-sm font-medium">{lesson.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {lesson.type} • Lesson {lesson.order}
-                      </div>
-                    </div>
-                    <div className="text-sm text-muted-foreground">Preview</div>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          </div>
-
-          <aside className="space-y-6">
-            <div className="rounded-lg bg-card p-6">
-              <div className="text-sm text-muted-foreground mb-2">Instructor</div>
-              <div className="font-medium">{course.instructor.name}</div>
-            </div>
-
-            <div className="rounded-lg bg-card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="text-sm text-muted-foreground">Price</div>
-                  <div className="font-semibold text-foreground">{course.isFree ? "Free" : `$${course.price}`}</div>
+            {/* Instructor */}
+            {course.instructor && (
+              <div className="rounded-2xl bg-card border p-6">
+                <h2 className="text-lg font-semibold mb-3">Instructor</h2>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                    {course.instructor.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-medium">{course.instructor.name}</span>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Link
-                  href={`/checkout?course=${course.slug}`}
-                  className="flex-1 inline-flex justify-center items-center px-4 py-2 rounded bg-primary text-primary-foreground"
-                >
-                  Enroll now
-                </Link>
-                <Link href="/courses" className="inline-flex items-center px-4 py-2 rounded border">
-                  Back
-                </Link>
-              </div>
-            </div>
+            )}
+          </div>
 
-            <div className="rounded-lg bg-card p-6">
-              <div className="text-sm text-muted-foreground">Category</div>
-              <div className="font-medium">{course.category?.name ?? "General"}</div>
+          {/* Sidebar */}
+          <aside className="space-y-4">
+            <div className="rounded-2xl bg-card border p-6 space-y-5 sticky top-6">
+              {/* Price */}
+              <div className="text-center space-y-1">
+                {course.isFree ? (
+                  <div className="text-4xl font-black text-green-500">Free</div>
+                ) : (
+                  <div className="text-4xl font-black text-foreground">${course.price}</div>
+                )}
+              </div>
+
+              {/* Enroll Button */}
+              <button
+                onClick={handleEnroll}
+                disabled={isCheckingOut}
+                className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-base transition hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isCheckingOut ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing…
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    {course.isFree ? "Enroll for Free" : "Enroll Now"}
+                  </>
+                )}
+              </button>
+
+              <Link
+                href="/courses"
+                className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-xl border font-medium text-sm hover:bg-secondary transition"
+              >
+                <ArrowLeft className="h-4 w-4" /> Back to courses
+              </Link>
+
+              {/* What you get */}
+              <div className="pt-2 border-t space-y-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  <span>Lifetime access</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-blue-500" />
+                  <span>Join other students</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  <span>Certificate of completion</span>
+                </div>
+              </div>
             </div>
           </aside>
         </div>
