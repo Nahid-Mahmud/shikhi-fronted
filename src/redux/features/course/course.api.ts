@@ -4,7 +4,7 @@ import { ICourse, ICreateCourseRequest, IUpdateCourseRequest } from "@/types/cou
 
 export const courseApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createCourse: builder.mutation<TResponse<ICourse>, ICreateCourseRequest>({
+    createCourse: builder.mutation<TResponse<ICourse>, any>({
       query: (data) => ({
         url: "/courses",
         method: "POST",
@@ -26,7 +26,7 @@ export const courseApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Course"],
     }),
-    updateCourse: builder.mutation<TResponse<ICourse>, { id: string; body: IUpdateCourseRequest }>({
+    updateCourse: builder.mutation<TResponse<ICourse>, { id: string; body: any }>({
       query: ({ id, body }) => ({
         url: `/courses/${id}`,
         method: "PATCH",

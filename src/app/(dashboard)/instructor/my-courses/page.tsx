@@ -1,14 +1,7 @@
 "use client";
 
-import { useGetAllCoursesQuery } from "@/redux/features/course/course.api";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { useDeleteCourseMutation, useGetAllCoursesQuery } from "@/redux/features/course/course.api";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,16 +10,43 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MoreHorizontal, Pencil, Trash2, PlusCircle } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { DeleteConfirmation } from "@/components/ui/DeleteConfirmation";
+
+import { ICourse } from "@/types/course.types";
 
 export default function InstructorMyCourses() {
   const { data: coursesData, isLoading } = useGetAllCoursesQuery();
+  const [deleteCourse] = useDeleteCourseMutation();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
 
-  if (isLoading) {
-    return <div className="p-6">Loading courses...</div>;
-  }
+  const courses = (coursesData?.data as ICourse[]) || [];
+  const isLoadingSkeleton = isLoading;
 
-  const courses = coursesData?.data || [];
+  const handleDeleteClick = (id: string) => {
+    setCourseToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!courseToDelete) return;
+
+    try {
+      const res = await deleteCourse(courseToDelete).unwrap();
+      if (res.success) {
+        toast.success("Course deleted successfully");
+      }
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to delete course");
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setCourseToDelete(null);
+    }
+  };
 
   return (
     <div className="p-6">
@@ -45,7 +65,24 @@ export default function InstructorMyCourses() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {courses.length === 0 ? (
+            {isLoadingSkeleton ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[200px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[80px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-[60px]" />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Skeleton className="h-8 w-8 ml-auto" />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : courses.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
                   No courses found.
@@ -56,13 +93,15 @@ export default function InstructorMyCourses() {
                 <TableRow key={course.id}>
                   <TableCell className="font-medium">{course.title}</TableCell>
                   <TableCell>
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      course.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-800'
-                    }`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        course.status === "published" ? "bg-green-100 text-green-800" : "bg-slate-100 text-slate-800"
+                      }`}
+                    >
                       {course.status}
                     </span>
                   </TableCell>
-                  <TableCell>{course.isFree ? 'Free' : `$${course.price}`}</TableCell>
+                  <TableCell>{course.isFree ? "Free" : `$${course.price}`}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -81,7 +120,10 @@ export default function InstructorMyCourses() {
                           <PlusCircle className="mr-2 h-4 w-4" />
                           Add lesson
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50">
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                          onClick={() => handleDeleteClick(course.id)}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
@@ -94,6 +136,14 @@ export default function InstructorMyCourses() {
           </TableBody>
         </Table>
       </div>
+
+      <DeleteConfirmation
+        open={isDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteDialogOpen(false)}
+        title="Delete Course"
+        description="Are you sure you want to delete this course? This action cannot be undone."
+      />
     </div>
   );
 }

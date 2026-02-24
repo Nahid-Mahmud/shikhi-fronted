@@ -116,7 +116,6 @@ export default function CreateCoursePage() {
     try {
       const payload = {
         title: form.title,
-        slug: form.slug,
         description: form.description,
         isFree: form.isFree,
         price: form.isFree ? 0 : Number(form.price),
@@ -124,7 +123,7 @@ export default function CreateCoursePage() {
         categoryId: form.categoryId,
       };
 
-      const parsed = courseSchema.safeParse(payload);
+      const parsed = courseSchema.safeParse({ ...payload, slug: form.slug });
       if (!parsed.success) {
         const fieldErrors: Record<string, string> = {};
         parsed.error.issues.forEach((err) => {
@@ -136,32 +135,30 @@ export default function CreateCoursePage() {
         return;
       }
 
-      // TODO: Replace with actual API call
-      // await new Promise((res) => setTimeout(res, 1200));
-
       if (!user) {
         setForm((prev) => ({ ...prev, error: "User not authenticated. Please log in.", loading: false }));
         toast.error("User not authenticated. Please log in.");
         return;
       }
 
-      const res = await createCourse({
-        title: form.title,
-        description: form.description,
-        isFree: form.isFree,
-        price: form.isFree ? 0 : Number(form.price),
-        status: form.status as "draft" | "published" | "archived",
-        categoryId: form.categoryId,
-        instructorId: user?.data.id, // TODO: Replace with actual instructor ID from auth context
-      }).unwrap();
+      const formData = new FormData();
+      formData.append("data", JSON.stringify(payload));
+      if (form.thumbnail) {
+        formData.append("thumbnail", form.thumbnail);
+      }
+
+      const res = await createCourse(formData).unwrap();
 
       if (res.success) {
         toast.success("Course created successfully!");
+        setForm({ ...initialState, success: "Course created successfully!" });
       }
-
-      setForm({ ...initialState, success: "Course created successfully!" });
-    } catch {
-      setForm((prev) => ({ ...prev, error: "Failed to create course. Please try again.", loading: false }));
+    } catch (err: any) {
+      setForm((prev) => ({
+        ...prev,
+        error: err?.data?.message || "Failed to create course. Please try again.",
+        loading: false,
+      }));
     }
   };
 
