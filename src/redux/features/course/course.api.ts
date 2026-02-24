@@ -6,7 +6,7 @@ export const courseApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createCourse: builder.mutation<TResponse<ICourse>, ICreateCourseRequest>({
       query: (data) => ({
-        url: "/course",
+        url: "/courses",
         method: "POST",
         body: data,
       }),
@@ -14,21 +14,21 @@ export const courseApi = baseApi.injectEndpoints({
     }),
     getAllCourses: builder.query<TResponse<ICourse[]>, void>({
       query: () => ({
-        url: "/course",
+        url: "/courses",
         method: "GET",
       }),
       providesTags: ["Course"],
     }),
     getCourseById: builder.query<TResponse<ICourse>, string>({
       query: (id) => ({
-        url: `/course/${id}`,
+        url: `/courses/${id}`,
         method: "GET",
       }),
       providesTags: ["Course"],
     }),
     updateCourse: builder.mutation<TResponse<ICourse>, { id: string; body: IUpdateCourseRequest }>({
       query: ({ id, body }) => ({
-        url: `/course/${id}`,
+        url: `/courses/${id}`,
         method: "PATCH",
         body,
       }),
@@ -36,7 +36,7 @@ export const courseApi = baseApi.injectEndpoints({
     }),
     deleteCourse: builder.mutation<TResponse<null>, string>({
       query: (id) => ({
-        url: `/course/${id}`,
+        url: `/courses/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Course"],

@@ -16,12 +16,12 @@ export interface ICourse {
 
 export interface ICreateCourseRequest {
   title: string;
-  slug: string;
+  slug?: string;
   description?: string;
   thumbnail?: string;
   price?: number;
   isFree?: boolean;
-  status?: string;
+  status?: "draft" | "published" | "archived";
   instructorId: string;
   categoryId?: string;
 }
@@ -33,7 +33,7 @@ export interface IUpdateCourseRequest {
   thumbnail?: string;
   price?: number;
   isFree?: boolean;
-  status?: string;
+  status?: "draft" | "published" | "archived";
   categoryId?: string;
 }
 
