@@ -122,7 +122,11 @@ export default function InstructorMyCourses() {
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            router.push(`/instructor/add-lessons/${course.id}`);
+                          }}
+                        >
                           <PlusCircle className="mr-2 h-4 w-4" />
                           Add lesson
                         </DropdownMenuItem>

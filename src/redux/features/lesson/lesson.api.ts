@@ -4,7 +4,7 @@ import { ILesson, ICreateLessonRequest, IUpdateLessonRequest } from "@/types/les
 
 export const lessonApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createLesson: builder.mutation<TResponse<ILesson>, any>({
+    createLesson: builder.mutation<TResponse<ILesson>, FormData>({
       query: (data) => ({
         url: "/lesson",
         method: "POST",
@@ -12,10 +12,11 @@ export const lessonApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Lesson"],
     }),
-    getAllLessons: builder.query<TResponse<ILesson[]>, void>({
-      query: () => ({
+    getAllLessons: builder.query<TResponse<ILesson[]>, string | void>({
+      query: (courseId) => ({
         url: "/lesson",
         method: "GET",
+        params: courseId ? { courseId } : {},
       }),
       providesTags: ["Lesson"],
     }),
@@ -26,7 +27,7 @@ export const lessonApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Lesson"],
     }),
-    updateLesson: builder.mutation<TResponse<ILesson>, { id: string; body: any }>({
+    updateLesson: builder.mutation<TResponse<ILesson>, { id: string; body: FormData }>({
       query: ({ id, body }) => ({
         url: `/lesson/${id}`,
         method: "PATCH",
