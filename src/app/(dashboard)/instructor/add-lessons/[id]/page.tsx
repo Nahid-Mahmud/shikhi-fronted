@@ -292,8 +292,8 @@ export default function AddLessons() {
 
         {/* Right Side: Form */}
         <div className="lg:col-span-8">
-          <Card className="border-primary/10 shadow-2xl rounded-2xl overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
+          <Card className="border-primary/10 shadow-2xl rounded-2xl pt-0 overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-primary to-primary/80 p-5 text-primary-foreground">
               <CardTitle className="text-xl flex items-center gap-2">
                 {editingLessonId ? <Pencil className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
                 {editingLessonId ? "Modify Existing Lesson" : "Create New Lesson"}
