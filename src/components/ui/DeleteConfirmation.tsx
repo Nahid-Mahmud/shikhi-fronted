@@ -22,6 +22,7 @@ export function DeleteConfirmation({
   confirmText = "Delete",
   cancelText = "Cancel",
   children,
+  
 }: DeleteConfirmationProps) {
   return (
     <Dialog open={open} onOpenChange={onCancel}>

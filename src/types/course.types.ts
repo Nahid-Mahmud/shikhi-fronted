@@ -12,6 +12,14 @@ export interface ICourse {
   updatedAt: string;
   instructorId: string;
   categoryId?: string;
+  instructor?: {
+    id: string;
+    name: string;
+  };
+  category?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface ICreateCourseRequest {

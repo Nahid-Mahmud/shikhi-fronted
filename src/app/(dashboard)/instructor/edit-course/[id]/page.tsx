@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { z } from "zod";
 import slugify from "slugify";
 import { Button } from "@/components/ui/button";
@@ -18,20 +18,18 @@ import {
   ImageIcon,
   DollarSign,
   Settings,
-  CheckCircle2,
   AlertCircle,
   Loader2,
   Sparkles,
   UploadCloud,
   X,
+  ArrowLeft,
 } from "lucide-react";
 import { useGetAllCategoriesQuery } from "@/redux/features/category/category.api";
-import { useCreateCourseMutation } from "@/redux/features/course/course.api";
-import { useGetMeQuery } from "@/redux/features/auth/auth.api";
+import { useGetCourseByIdQuery, useUpdateCourseMutation } from "@/redux/features/course/course.api";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-
-// TODO: Fetch categories from backend API
+import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
 
 const courseStatuses = [
   { value: "draft", label: "Draft" },
@@ -43,7 +41,7 @@ type FormState = {
   title: string;
   slug: string;
   description: string;
-  thumbnail: File | null;
+  thumbnail: File | string | null;
   price: number;
   isFree: boolean;
   status: string;
@@ -78,21 +76,41 @@ const courseSchema = z.object({
   categoryId: z.string().min(1, "Category is required"),
 });
 
-export default function CreateCoursePage() {
+export default function EditCoursePage() {
+  const params = useParams();
+  const id = params.id as string;
+  const router = useRouter();
+
   // course category form api
   const { data: categories, isLoading: categoriesLoading } = useGetAllCategoriesQuery();
 
-  // create course hook
-  const [createCourse, { isLoading: isCreating }] = useCreateCourseMutation();
+  // get course data
+  const { data: courseData, isLoading: isCourseLoading } = useGetCourseByIdQuery(id);
 
-  const router = useRouter();
-
-  // get user
-  const { data: user, isLoading: isUserLoading } = useGetMeQuery();
+  // update course hook
+  const [updateCourse, { isLoading: isUpdating }] = useUpdateCourseMutation();
 
   const [form, setForm] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // populate form with existing course data
+  useEffect(() => {
+    if (courseData?.data) {
+      const course = courseData.data;
+      setForm((prev) => ({
+        ...prev,
+        title: course.title,
+        slug: course.slug,
+        description: course.description || "",
+        thumbnail: course.thumbnail || null,
+        price: course.price,
+        isFree: course.isFree,
+        status: course.status as string,
+        categoryId: course.categoryId || "",
+      }));
+    }
+  }, [courseData]);
 
   const set = (key: keyof FormState, value: FormState[keyof FormState]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -138,31 +156,25 @@ export default function CreateCoursePage() {
         return;
       }
 
-      if (!user) {
-        setForm((prev) => ({ ...prev, error: "User not authenticated. Please log in.", loading: false }));
-        toast.error("User not authenticated. Please log in.");
-        return;
-      }
-
       const formData = new FormData();
       formData.append("data", JSON.stringify(payload));
-      if (form.thumbnail) {
+      if (form.thumbnail instanceof File) {
         formData.append("thumbnail", form.thumbnail);
       }
 
-      const res = await createCourse(formData).unwrap();
+      const res = await updateCourse({ id, body: formData }).unwrap();
 
       if (res.success) {
-        toast.success("Course created successfully!");
-        setForm({ ...initialState, success: "Course created successfully!" });
+        toast.success("Course updated successfully!");
         router.push("/instructor/my-courses");
       }
     } catch (err: any) {
       setForm((prev) => ({
         ...prev,
-        error: err?.data?.message || "Failed to create course. Please try again.",
+        error: err?.data?.message || "Failed to update course. Please try again.",
         loading: false,
       }));
+      toast.error(err?.data?.message || "Failed to update course.");
     }
   };
 
@@ -171,6 +183,14 @@ export default function CreateCoursePage() {
     published: "bg-emerald-100 text-emerald-800 border-emerald-200",
     archived: "bg-slate-100 text-slate-600 border-slate-200",
   };
+
+  if (isCourseLoading) {
+    return (
+      <div className="flex h-[80vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen  flex items-start justify-center py-12 px-4">
@@ -181,15 +201,34 @@ export default function CreateCoursePage() {
       </div>
 
       <div className="relative w-full max-w-2xl">
+        {/* Navigation */}
+        <Link
+          href="/instructor/my-courses"
+          className="flex items-center gap-2 text-sm text-slate-400 hover:text-primary transition-colors mb-6 group w-fit"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          Back to My Courses
+        </Link>
+
         {/* Header */}
-        <div className="mb-8 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-            <Sparkles className="w-5 h-5 text-white" />
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+              <Settings className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Edit Course</h1>
+              <p className="text-slate-400 text-sm">
+                Instructor:{" "}
+                <span className="text-foreground font-medium">{courseData?.data?.instructor?.name || "..."}</span>
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold  tracking-tight">Create a Course</h1>
-            <p className="text-slate-400 text-sm">Fill in the details to publish your new course.</p>
-          </div>
+          {courseData?.data?.category && (
+            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+              {courseData.data.category.name}
+            </Badge>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} encType="multipart/form-data" className="space-y-4">
@@ -277,31 +316,52 @@ export default function CreateCoursePage() {
                 />
                 {form.thumbnail ? (
                   <div className="flex items-center justify-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center">
-                      <ImageIcon className="w-5 h-5 text-primary" />
+                    <div className="w-16 h-10 rounded-lg overflow-hidden border border-border bg-muted">
+                      {typeof form.thumbnail === "string" ? (
+                        <img src={form.thumbnail} alt="Current thumbnail" className="w-full h-full object-cover" />
+                      ) : (
+                        <img
+                          src={URL.createObjectURL(form.thumbnail)}
+                          alt="New thumbnail preview"
+                          className="w-full h-full object-cover"
+                          onLoad={(e) => URL.revokeObjectURL(e.currentTarget.src)}
+                        />
+                      )}
                     </div>
-                    <div className="text-left">
-                      <p className=" text-sm font-medium truncate max-w-xs">{form.thumbnail.name}</p>
-                      <p className=" text-xs">{(form.thumbnail.size / 1024).toFixed(1)} KB</p>
+                    <div className="text-left flex-1 min-w-0">
+                      <p className=" text-sm font-medium truncate">
+                        {typeof form.thumbnail === "string" ? "Current course image" : form.thumbnail.name}
+                      </p>
+                      {typeof form.thumbnail !== "string" && (
+                        <p className=" text-xs text-slate-500">
+                          {(form.thumbnail.size / 1024).toFixed(1)} KB • Ready to upload
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         set("thumbnail", null);
+                        if (fileInputRef.current) fileInputRef.current.value = "";
                       }}
-                      className="ml-auto  hover:text-red-400 transition-colors"
+                      className="p-1.5 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-500 transition-all"
+                      title="Remove image"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <UploadCloud className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
-                    <p className="text-muted-foreground text-sm group-hover:text-foreground transition-colors">
-                      Click to upload or drag & drop
+                  <div className="flex flex-col items-center gap-2 py-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-1">
+                      <UploadCloud className="w-6 h-6 text-primary" />
+                    </div>
+                    <p className="text-foreground text-sm font-medium">Click to upload new thumbnail</p>
+                    <p className="text-slate-500 text-xs text-center px-4">
+                      JPG, PNG or WebP. Max 2MB.
+                      <br />
+                      Recommended: 1280×720px
                     </p>
-                    <p className="text-slate-600 text-xs">Recommended: 1280×720px</p>
                   </div>
                 )}
               </div>
@@ -369,7 +429,11 @@ export default function CreateCoursePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className=" text-sm font-medium">Status</Label>
-                  <Select value={form.status} onValueChange={(v) => set("status", v)}>
+                  <Select
+                    key={form.status || "status-select"}
+                    value={form.status}
+                    onValueChange={(v) => set("status", v)}
+                  >
                     <SelectTrigger className="bg-card/80 border-border text-foreground focus:ring-primary h-10">
                       <SelectValue>
                         <div className="flex items-center gap-2">
@@ -400,13 +464,13 @@ export default function CreateCoursePage() {
 
                 <div className="space-y-1.5">
                   <Label className=" text-sm font-medium">Category</Label>
-                  <Select value={form.categoryId} onValueChange={(v) => set("categoryId", v)}>
+                  <Select
+                    key={form.categoryId || "category-select"}
+                    value={form.categoryId}
+                    onValueChange={(v) => set("categoryId", v)}
+                  >
                     <SelectTrigger className="bg-card/80 border-border text-foreground focus:ring-primary h-10">
-                      {categoriesLoading ? (
-                        <SelectValue placeholder="Loading categories..." />
-                      ) : (
-                        <SelectValue placeholder="Select category" />
-                      )}
+                      <SelectValue placeholder={categoriesLoading ? "Loading..." : "Select category"} />
                     </SelectTrigger>
                     <SelectContent className="bg-card border-border">
                       {categories?.data?.map((cat) => (
@@ -427,12 +491,6 @@ export default function CreateCoursePage() {
           </Card>
 
           {/* Alerts */}
-          {form.success && (
-            <Alert className="bg-card/60 border-border text-foreground animate-in fade-in slide-in-from-bottom-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <AlertDescription className="text-foreground">{form.success}</AlertDescription>
-            </Alert>
-          )}
           {form.error && (
             <Alert className="bg-card/60 border-border text-foreground animate-in fade-in slide-in-from-bottom-2">
               <AlertCircle className="w-4 h-4 text-destructive" />
@@ -441,23 +499,33 @@ export default function CreateCoursePage() {
           )}
 
           {/* Submit */}
-          <Button
-            type="submit"
-            disabled={form.loading}
-            className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/20 transition-all duration-200 disabled:opacity-60"
-          >
-            {form.loading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Creating Course...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Create Course
-              </>
-            )}
-          </Button>
+          <div className="flex gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/instructor/my-courses")}
+              className="flex-1 h-11 border-border hover:bg-card transition-all duration-200"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isUpdating}
+              className="flex-[2] h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/20 transition-all duration-200 disabled:opacity-60"
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Updating Course...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Update Course
+                </>
+              )}
+            </Button>
+          </div>
         </form>
       </div>
     </div>

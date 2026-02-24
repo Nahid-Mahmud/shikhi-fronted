@@ -15,17 +15,19 @@ import { MoreHorizontal, Pencil, Trash2, PlusCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DeleteConfirmation } from "@/components/ui/DeleteConfirmation";
+import { useRouter } from "next/navigation";
 
 import { ICourse } from "@/types/course.types";
 
 export default function InstructorMyCourses() {
   const { data: coursesData, isLoading } = useGetAllCoursesQuery();
-  const [deleteCourse] = useDeleteCourseMutation();
+  const [deleteCourse, { isLoading: isDeleting }] = useDeleteCourseMutation();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
 
   const courses = (coursesData?.data as ICourse[]) || [];
   const isLoadingSkeleton = isLoading;
+  const router = useRouter();
 
   const handleDeleteClick = (id: string) => {
     setCourseToDelete(id);
@@ -46,6 +48,10 @@ export default function InstructorMyCourses() {
       setIsDeleteDialogOpen(false);
       setCourseToDelete(null);
     }
+  };
+
+  const handleEdit = (id: string) => {
+    router.push(`/instructor/edit-course/${id}`);
   };
 
   return (
@@ -112,7 +118,7 @@ export default function InstructorMyCourses() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(course.id)}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
@@ -141,8 +147,9 @@ export default function InstructorMyCourses() {
         open={isDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
         onCancel={() => setIsDeleteDialogOpen(false)}
-        title="Delete Course"
+        title={"Delete Course"}
         description="Are you sure you want to delete this course? This action cannot be undone."
+        confirmText={isDeleting ? "Deleting..." : "Delete"}
       />
     </div>
   );
