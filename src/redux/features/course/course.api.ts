@@ -41,6 +41,14 @@ export const courseApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Course"],
     }),
+    changeCourseStatus: builder.mutation<TResponse<ICourse>, { id: string; status: string }>({
+      query: ({ id, status }) => ({
+        url: `/courses/${id}/status`,
+        method: "PATCH",
+        body: { status },
+      }),
+      invalidatesTags: ["Course"],
+    }),
   }),
   overrideExisting: false,
 });
@@ -51,4 +59,5 @@ export const {
   useGetCourseByIdQuery,
   useUpdateCourseMutation,
   useDeleteCourseMutation,
+  useChangeCourseStatusMutation,
 } = courseApi;
