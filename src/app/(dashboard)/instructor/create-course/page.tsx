@@ -104,7 +104,15 @@ export default function CreateCoursePage() {
   };
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) set("thumbnail", e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 4 * 1024 * 1024) {
+        toast.error("Thumbnail image size must be less than 4MB");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+      set("thumbnail", file);
+    }
   };
 
   const handleIsFreeChange = (checked: boolean) => {
@@ -301,7 +309,7 @@ export default function CreateCoursePage() {
                     <p className="text-muted-foreground text-sm group-hover:text-foreground transition-colors">
                       Click to upload or drag & drop
                     </p>
-                    <p className="text-slate-600 text-xs">Recommended: 1280×720px</p>
+                    <p className="text-slate-600 text-xs">Recommended: 1280×720px (Max 4MB)</p>
                   </div>
                 )}
               </div>

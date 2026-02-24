@@ -122,7 +122,15 @@ export default function EditCoursePage() {
   };
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) set("thumbnail", e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 4 * 1024 * 1024) {
+        toast.error("Thumbnail image size must be less than 4MB");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+      set("thumbnail", file);
+    }
   };
 
   const handleIsFreeChange = (checked: boolean) => {
@@ -334,7 +342,7 @@ export default function EditCoursePage() {
                       </p>
                       {typeof form.thumbnail !== "string" && (
                         <p className=" text-xs text-slate-500">
-                          {(form.thumbnail.size / 1024).toFixed(1)} KB • Ready to upload
+                          {(form.thumbnail.size / 1024).toFixed(1)} KB • Ready to upload (Max 4MB)
                         </p>
                       )}
                     </div>
@@ -358,7 +366,7 @@ export default function EditCoursePage() {
                     </div>
                     <p className="text-foreground text-sm font-medium">Click to upload new thumbnail</p>
                     <p className="text-slate-500 text-xs text-center px-4">
-                      JPG, PNG or WebP. Max 2MB.
+                      JPG, PNG or WebP. Max 4MB.
                       <br />
                       Recommended: 1280×720px
                     </p>

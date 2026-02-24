@@ -392,7 +392,13 @@ export default function AddLessons() {
                         onDrop={(e) => {
                           e.preventDefault();
                           const file = e.dataTransfer.files?.[0];
-                          if (file && file.type.startsWith("video/")) setVideoFile(file);
+                          if (file && file.type.startsWith("video/")) {
+                            if (file.size > 4 * 1024 * 1024) {
+                              toast.error("Video file size must be less than 4MB");
+                              return;
+                            }
+                            setVideoFile(file);
+                          }
                         }}
                       >
                         <div className="space-y-2 text-center">
@@ -413,13 +419,25 @@ export default function AddLessons() {
                                 type="file"
                                 accept="video/*"
                                 className="sr-only"
-                                onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    if (file.size > 4 * 1024 * 1024) {
+                                      toast.error("Video file size must be less than 4MB");
+                                      e.target.value = ""; // Reset input
+                                      return;
+                                    }
+                                    setVideoFile(file);
+                                  } else {
+                                    setVideoFile(null);
+                                  }
+                                }}
                               />
                             </label>
                             <p className="mt-1">or drag and drop MP4, WEBM</p>
                           </div>
                           <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">
-                            Maximum size: 100MB
+                            Maximum size: 4MB
                           </p>
 
                           {videoFile && (
