@@ -1,61 +1,33 @@
 import { baseApi } from "@/redux/baseApi";
-import { TResponse } from "@/types/index";
-import {
-  ILessonProgress,
-  ICreateLessonProgressRequest,
-  IUpdateLessonProgressRequest,
-} from "@/types/lessonProgress.types";
+import { TResponse } from "@/types";
+import { ILessonProgress } from "@/types/lessonProgress.types";
 
 export const lessonProgressApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createLessonProgress: builder.mutation<TResponse<ILessonProgress>, ICreateLessonProgressRequest>({
+    updateLessonProgress: builder.mutation<TResponse<ILessonProgress>, { lessonId: string; completed: boolean }>({
       query: (data) => ({
         url: "/lesson-progress",
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["LessonProgress"],
+      invalidatesTags: ["Lesson", "Course"],
     }),
-    getAllLessonProgress: builder.query<TResponse<ILessonProgress[]>, void>({
+    getMyProgress: builder.query<TResponse<ILessonProgress[]>, void>({
       query: () => ({
         url: "/lesson-progress",
         method: "GET",
       }),
-      providesTags: ["LessonProgress"],
+      providesTags: ["Lesson"],
     }),
-    getLessonProgressById: builder.query<TResponse<ILessonProgress>, string>({
-      query: (id) => ({
-        url: `/lesson-progress/${id}`,
+    getCourseProgress: builder.query<TResponse<ILessonProgress[]>, string>({
+      query: (courseId) => ({
+        url: `/lesson-progress/${courseId}`,
         method: "GET",
       }),
-      providesTags: ["LessonProgress"],
-    }),
-    updateLessonProgress: builder.mutation<
-      TResponse<ILessonProgress>,
-      { id: string; body: IUpdateLessonProgressRequest }
-    >({
-      query: ({ id, body }) => ({
-        url: `/lesson-progress/${id}`,
-        method: "PATCH",
-        body,
-      }),
-      invalidatesTags: ["LessonProgress"],
-    }),
-    deleteLessonProgress: builder.mutation<TResponse<null>, string>({
-      query: (id) => ({
-        url: `/lesson-progress/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["LessonProgress"],
+      providesTags: ["Lesson"],
     }),
   }),
   overrideExisting: false,
 });
 
-export const {
-  useCreateLessonProgressMutation,
-  useGetAllLessonProgressQuery,
-  useGetLessonProgressByIdQuery,
-  useUpdateLessonProgressMutation,
-  useDeleteLessonProgressMutation,
-} = lessonProgressApi;
+export const { useUpdateLessonProgressMutation, useGetMyProgressQuery, useGetCourseProgressQuery } = lessonProgressApi;

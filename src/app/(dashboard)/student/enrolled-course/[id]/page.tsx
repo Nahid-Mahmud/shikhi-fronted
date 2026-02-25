@@ -5,8 +5,8 @@ import { useParams } from "next/navigation";
 import { useGetCourseByIdQuery } from "@/redux/features/course/course.api";
 import { useGetAllLessonsQuery } from "@/redux/features/lesson/lesson.api";
 import {
-  useGetAllLessonProgressQuery,
-  useCreateLessonProgressMutation,
+  useGetCourseProgressQuery,
+  useUpdateLessonProgressMutation,
 } from "@/redux/features/lessonProgress/lessonProgress.api";
 import { LessonSidebar } from "@/components/enrolled-course/LessonSidebar";
 import { VideoLesson } from "@/components/enrolled-course/VideoLesson";
@@ -21,8 +21,8 @@ export default function EnrolledCourseDetail() {
 
   const { data: courseRes, isLoading: isCourseLoading } = useGetCourseByIdQuery(courseId as string);
   const { data: lessonsRes, isLoading: isLessonsLoading } = useGetAllLessonsQuery(courseId as string);
-  const { data: progressRes } = useGetAllLessonProgressQuery();
-  const [createProgress] = useCreateLessonProgressMutation();
+  const { data: progressRes } = useGetCourseProgressQuery(courseId as string);
+  const [updateProgress] = useUpdateLessonProgressMutation();
 
   const lessons = lessonsRes?.data || [];
   const sortedLessons = useMemo(() => [...lessons].sort((a, b) => a.order - b.order), [lessons]);
@@ -39,11 +39,10 @@ export default function EnrolledCourseDetail() {
 
   const handleMarkAsComplete = async (lessonId: string) => {
     try {
-      await createProgress({
+      await updateProgress({
         lessonId,
         completed: true,
-        // userId: loggedInUser?.id // The backend probably gets userId from auth token
-      } as any).unwrap();
+      }).unwrap();
       toast.success("Lesson marked as complete!");
     } catch (error) {
       toast.error("Failed to update progress");

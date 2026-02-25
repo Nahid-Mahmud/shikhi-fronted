@@ -87,14 +87,6 @@ const ForwardRefEditor = forwardRef<MDXEditorMethods, MDXEditorProps>(({ markdow
         .mdx-editor-container .mdxeditor {
           --mdxeditor-toolbar-background: transparent;
         }
-        .mdx-editor-container .prose :where(h1, h2, h3, h4, h5, h6) {
-          margin-top: 1.5rem;
-          margin-bottom: 0.5rem;
-        }
-        .mdx-editor-container .prose :where(p) {
-          margin-top: 1rem;
-          margin-bottom: 1rem;
-        }
       `}</style>
     </div>
   );
