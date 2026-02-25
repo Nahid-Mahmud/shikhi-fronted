@@ -1,29 +1,45 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useGetAllCoursesQuery } from "@/redux/features/course/course.api";
 import { ICourse } from "@/types/course.types";
+import { useDebounce } from "@/hooks/use-debounce";
+
+const LIMIT = 9;
 
 export default function AllCourses() {
-  const [query, setQuery] = useState("");
-  const [level, setLevel] = useState("all");
+  const [search, setSearch] = useState("");
+  const [isFree, setIsFree] = useState<"all" | "free" | "paid">("all");
+  const [page, setPage] = useState(1);
 
-  const { data: coursesResponse, isLoading, isError } = useGetAllCoursesQuery();
+  const debouncedSearch = useDebounce(search, 500);
+
+  const queryParams = {
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(isFree === "free" && { isFree: true }),
+    ...(isFree === "paid" && { isFree: false }),
+    page,
+    limit: LIMIT,
+  };
+
+  const { data: coursesResponse, isLoading, isError } = useGetAllCoursesQuery(queryParams);
 
   const courses = coursesResponse?.data || [];
+  const meta = coursesResponse?.meta;
+  const totalPages = meta?.totalPages ?? 1;
 
-  const filtered = useMemo(
-    () =>
-      courses.filter(
-        (c: ICourse) =>
-          c.title.toLowerCase().includes(query.toLowerCase()) &&
-          (level === "all" || (c as any).level === level),
-      ),
-    [query, level, courses],
-  );
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setPage(1); // reset to page 1 on new search
+  };
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setIsFree(e.target.value as "all" | "free" | "paid");
+    setPage(1); // reset to page 1 on filter change
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,20 +57,19 @@ export default function AllCourses() {
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <input
                   type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+                  value={search}
+                  onChange={handleSearchChange}
                   placeholder="Search courses"
                   className="flex-1 sm:flex-none px-4 py-2 rounded-lg border bg-card text-foreground placeholder-muted-foreground"
                 />
                 <select
-                  value={level}
-                  onChange={(e) => setLevel(e.target.value)}
+                  value={isFree}
+                  onChange={handleFilterChange}
                   className="px-3 py-2 rounded-lg border bg-card text-foreground"
                 >
-                  <option value="all">All levels</option>
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
+                  <option value="all">All Prices</option>
+                  <option value="free">Free</option>
+                  <option value="paid">Paid</option>
                 </select>
               </div>
             </div>
@@ -70,7 +85,7 @@ export default function AllCourses() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {filtered.map((course: ICourse) => (
+                  {courses.map((course: ICourse) => (
                     <div
                       key={course.id}
                       className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow"
@@ -93,14 +108,11 @@ export default function AllCourses() {
                       </p>
                       <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
                         <span className="px-2 py-1 bg-primary/10 rounded text-primary">
-                          {(course as any).level || "All Levels"}
+                          {course.isFree ? "Free" : `$${course.price}`}
                         </span>
-                        <span>⭐ {(course as any).rating || "4.5"}</span>
+                        <span className="capitalize text-xs text-muted-foreground">{course.status}</span>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">
-                          {(course as any).students || "0"} students
-                        </p>
+                      <div className="flex items-center justify-end">
                         <Link href={`/courses/${course.id}`}>
                           <Button size="sm" className="flex items-center gap-2">
                             View <ArrowRight size={16} />
@@ -111,8 +123,49 @@ export default function AllCourses() {
                   ))}
                 </div>
 
-                {filtered.length === 0 && (
+                {courses.length === 0 && (
                   <p className="text-center text-muted-foreground py-12">No courses found matching your search.</p>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-10">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      <ChevronLeft size={16} />
+                    </Button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                      <Button
+                        key={pageNum}
+                        variant={pageNum === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPage(pageNum)}
+                        className="min-w-[36px]"
+                      >
+                        {pageNum}
+                      </Button>
+                    ))}
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= totalPages}
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    >
+                      <ChevronRight size={16} />
+                    </Button>
+                  </div>
+                )}
+
+                {meta && (
+                  <p className="text-center text-xs text-muted-foreground mt-4">
+                    Showing {courses.length} of {meta.total} courses
+                  </p>
                 )}
               </>
             )}

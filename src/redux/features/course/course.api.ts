@@ -1,6 +1,15 @@
 import { baseApi } from "@/redux/baseApi";
 import { TResponse } from "@/types/index";
-import { ICourse, ICreateCourseRequest, IUpdateCourseRequest } from "@/types/course.types";
+import { ICourse } from "@/types/course.types";
+
+export type CourseQueryParams = {
+  search?: string;
+  isFree?: boolean;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+};
 
 export const courseApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -12,10 +21,11 @@ export const courseApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Course"],
     }),
-    getAllCourses: builder.query<TResponse<ICourse[]>, void>({
-      query: () => ({
+    getAllCourses: builder.query<TResponse<ICourse[]>, CourseQueryParams | void>({
+      query: (params) => ({
         url: "/courses",
         method: "GET",
+        params,
       }),
       providesTags: ["Course"],
     }),
