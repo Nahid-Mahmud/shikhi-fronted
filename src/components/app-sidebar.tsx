@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { BookOpen, GraduationCap, LayoutDashboard, LibraryBig, PlusCircle, Settings2, Tag, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { BookOpen, GraduationCap, LayoutDashboard, LibraryBig, PlusCircle, Tag, Users } from "lucide-react";
+import * as React from "react";
 
 import {
   Sidebar,
@@ -14,10 +14,10 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { NavMain } from "./nav-main";
-import { NavUser } from "./nav-user";
 import { useGetMeQuery } from "@/redux/features/auth/auth.api";
 import Link from "next/link";
+import { NavMain } from "./nav-main";
+import { NavUser } from "./nav-user";
 
 type NavItem = {
   title: string;
