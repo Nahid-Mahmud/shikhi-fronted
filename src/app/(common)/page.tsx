@@ -5,8 +5,11 @@ import { PricingCard } from "@/components/shared/PricingCard";
 import { TestimonialCard } from "@/components/shared/TestimonialCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Award, BarChart3, BookOpen, ChevronDown, MessageSquare, Users, Zap } from "lucide-react";
+import { useGetAllCoursesQuery } from "@/redux/features/course/course.api";
 import Link from "next/link";
 import { useState } from "react";
+import Asset1 from "@/asssets/assets1.jpg";
+import Image from "next/image";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -134,6 +137,9 @@ export default function Home() {
     },
   ];
 
+  // fetch courses and show only 3 on the homepage
+  const { data: featuredCourses, isLoading } = useGetAllCoursesQuery({ page: 1, limit: 3 });
+
   return (
     <div className="min-h-screen bg-background">
       <main className="w-full">
@@ -226,8 +232,15 @@ export default function Home() {
                   )}
                 </ul>
               </div>
-              <div className="rounded-lg bg-secondary p-8 h-80 flex items-center justify-center">
-                <div className="text-center text-muted-foreground">Visual Element</div>
+              <div className="rounded-lg  p-8 h-80 flex items-center justify-center">
+                <Image
+                  src={Asset1}
+                  alt="Learning Illustration"
+                  className="object-cover rounded-lg"
+                  height={600}
+                  width={600}
+                />
+                {/* <div className="text-center text-muted-foreground">Visual Element</div> */}
               </div>
             </div>
           </div>
@@ -293,39 +306,50 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                {
-                  title: "Web Development Bootcamp",
-                  level: "Beginner",
-                  students: "2,450",
-                  rating: 4.9,
-                },
-                {
-                  title: "Data Science Fundamentals",
-                  level: "Intermediate",
-                  students: "3,120",
-                  rating: 4.8,
-                },
-                {
-                  title: "Advanced React Patterns",
-                  level: "Advanced",
-                  students: "1,890",
-                  rating: 4.9,
-                },
-              ].map((course, i) => (
-                <div
-                  key={i}
-                  className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  <div className="h-40 bg-primary/10 rounded-lg mb-4"></div>
-                  <h3 className="font-semibold text-foreground mb-2">{course.title}</h3>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
-                    <span className="px-2 py-1 bg-primary/10 rounded text-primary">{course.level}</span>
-                    <span>⭐ {course.rating}</span>
+              {isLoading ? (
+                // Loading skeletons
+                [1, 2, 3].map((i) => (
+                  <div key={i} className="p-6 rounded-lg border border-border bg-card animate-pulse">
+                    <div className="h-40 bg-secondary/20 rounded-lg mb-4" />
+                    <div className="h-5 bg-secondary/20 rounded w-3/4 mb-2" />
+                    <div className="h-4 bg-secondary/20 rounded w-1/2 mb-4" />
+                    <div className="h-4 bg-secondary/20 rounded w-1/4" />
                   </div>
-                  <p className="text-sm text-muted-foreground">{course.students} students</p>
+                ))
+              ) : featuredCourses && featuredCourses?.data && featuredCourses.data.length > 0 ? (
+                featuredCourses.data.map((course, i) => (
+                  <div
+                    key={course.id || i}
+                    className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow "
+                  >
+                    <Image
+                      src={course?.thumbnail || "/placeholder-course.jpg"}
+                      height={600}
+                      width={600}
+                      alt={course?.title || "Course thumbnail"}
+                      className="max-h-60 h-full"
+                    />
+                    <h3 className="font-semibold text-foreground mb-2 line-clamp-1">{course.title}</h3>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                      <span className="px-2 py-1 bg-primary/10 rounded text-primary">{"Beginner"}</span>
+                      <span>⭐ {5}</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">100 + students</p>
+                      {/* button to go to details page */}{" "}
+                      <Link className="cursor-pointer" href={`/courses/${course.id}`}>
+                        <Button variant="outline" size="sm" className="mt-4 cursor-pointer">
+                          View Details
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-1 md:col-span-3 text-center text-muted-foreground py-8">
+                  No courses available right now.
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </section>
