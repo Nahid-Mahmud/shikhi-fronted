@@ -47,12 +47,6 @@ const adminNav: NavItem[] = [
     icon: Tag,
     items: [{ title: "Manage Categories", url: "/admin/category" }],
   },
-  {
-    title: "Settings",
-    url: "/admin/settings",
-    icon: Settings2,
-    items: [{ title: "General", url: "/admin/settings" }],
-  },
 ];
 
 const instructorNav: NavItem[] = [
@@ -94,6 +88,7 @@ const studentNav: NavItem[] = [
 
 const navByRole: Record<string, NavItem[]> = {
   admin: adminNav,
+  super_admin: adminNav,
   instructor: instructorNav,
   student: studentNav,
 };
