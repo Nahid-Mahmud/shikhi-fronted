@@ -7,6 +7,7 @@ import { ArrowRight, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useGetAllCoursesQuery } from "@/redux/features/course/course.api";
 import { ICourse } from "@/types/course.types";
 import { useDebounce } from "@/hooks/use-debounce";
+import Image from "next/image";
 
 const LIMIT = 9;
 
@@ -90,8 +91,8 @@ export default function AllCourses() {
                       key={course.id}
                       className="p-6 rounded-lg border border-border bg-card hover:shadow-md transition-shadow"
                     >
-                      <div
-                        className="h-40 bg-primary/10 rounded-lg mb-4 bg-cover bg-center"
+                      {/* <div
+                        className="h-40 bg-primary/10 rounded-lg mb-4 w-full bg-cover bg-center"
                         style={{
                           backgroundImage: course.thumbnail ? `url(${course.thumbnail})` : undefined,
                         }}
@@ -101,6 +102,15 @@ export default function AllCourses() {
                             Course Thumbnail
                           </div>
                         )}
+                      </div> */}
+                      <div>
+                        <Image
+                          src={course?.thumbnail || ""}
+                          alt={course.title}
+                          width={500}
+                          height={500}
+                          className="w-full h-40 bg-primary/10 rounded-lg mb-4 bg-cover bg-center"
+                        />
                       </div>
                       <h3 className="font-semibold text-foreground mb-2 line-clamp-1">{course.title}</h3>
                       <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
