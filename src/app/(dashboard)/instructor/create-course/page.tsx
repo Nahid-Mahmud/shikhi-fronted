@@ -163,8 +163,9 @@ export default function CreateCoursePage() {
       if (res.success) {
         toast.success("Course created successfully!");
         setForm({ ...initialState, success: "Course created successfully!" });
-        router.push("/instructor/my-courses");
+        router.push("/instructor");
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setForm((prev) => ({
         ...prev,

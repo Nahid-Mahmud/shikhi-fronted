@@ -211,7 +211,7 @@ export default function EditCoursePage() {
       <div className="relative w-full max-w-2xl">
         {/* Navigation */}
         <Link
-          href="/instructor/my-courses"
+          href="/instructor/"
           className="flex items-center gap-2 text-sm text-slate-400 hover:text-primary transition-colors mb-6 group w-fit"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />

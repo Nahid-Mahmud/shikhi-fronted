@@ -86,6 +86,36 @@ export default function Login() {
     }
   };
 
+  const demoCredentials: Record<string, { email: string; password: string }> = {
+    admin: { email: "superadming@email.com", password: "superadminpassword" },
+    instructor: { email: "teacher@example.com", password: "Pa$$w0rd!" },
+    student: { email: "tusala@mailinator.com", password: "Pa$$w0rd!" },
+  };
+
+  const handleDemoLogin = async (role: "admin" | "instructor" | "student") => {
+    const creds = demoCredentials[role];
+    try {
+      const response = await login({ email: creds.email, password: creds.password }).unwrap();
+
+      setSession({
+        id: response.data.id,
+        role: response.data.role,
+        status: response.data.status,
+        email: response.data.email,
+      });
+
+      if (response.success) {
+        toast.success("Demo login successful! Redirecting...");
+        router.push("/");
+      }
+    } catch (err) {
+      const error = err as TError;
+      const errorMessage = error.data?.message || "Something went wrong during demo login";
+      setErrors({ form: errorMessage });
+      toast.error(errorMessage);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <main className="flex-1 w-full py-12 px-4 sm:px-6 lg:px-8">
@@ -177,6 +207,37 @@ export default function Login() {
                   )}
                 </Button>
               </form>
+
+              {/* Demo Login Buttons */}
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground text-center">Quick demo sign-in</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <Button
+                    variant="outline"
+                    className="w-full text-sm"
+                    onClick={() => handleDemoLogin("admin")}
+                    disabled={isLoading}
+                  >
+                    Admin
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full text-sm"
+                    onClick={() => handleDemoLogin("instructor")}
+                    disabled={isLoading}
+                  >
+                    Instructor
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full text-sm"
+                    onClick={() => handleDemoLogin("student")}
+                    disabled={isLoading}
+                  >
+                    Student
+                  </Button>
+                </div>
+              </div>
 
               {/* Divider */}
               <div className="relative">

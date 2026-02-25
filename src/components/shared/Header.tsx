@@ -67,15 +67,6 @@ export function Header() {
             ) : user ? (
               <div className="flex items-center space-x-4">
                 <Link
-                  href="/profile"
-                  className="flex items-center space-x-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
-                >
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <UserIcon size={18} className="text-primary" />
-                  </div>
-                  <span className="hidden lg:inline-block">{user.name}</span>
-                </Link>
-                <Link
                   href={calculateDashboardLink(user.role)}
                   className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
