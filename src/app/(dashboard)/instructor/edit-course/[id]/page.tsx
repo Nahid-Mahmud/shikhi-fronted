@@ -174,7 +174,7 @@ export default function EditCoursePage() {
 
       if (res.success) {
         toast.success("Course updated successfully!");
-        router.push("/instructor/my-courses");
+        router.push("/instructor");
       }
     } catch (err: any) {
       setForm((prev) => ({
