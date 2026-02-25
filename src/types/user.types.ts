@@ -9,14 +9,7 @@ export interface IUser {
   // Add other fields as needed
 }
 
-
-
-export interface IGetAllUsersResponse {
-  users: IUser[];
-  total: number;
-}
-
-
+export type IGetAllUsersResponse = IUser[];
 
 export interface IUpdateUserStatusRequest {
   id: string;
