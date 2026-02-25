@@ -14,9 +14,10 @@ interface TextLessonProps {
   lesson: ILesson;
   onComplete?: () => void;
   isCompleted?: boolean;
+  isUpdatingProgress?: boolean;
 }
 
-export function TextLesson({ lesson, onComplete, isCompleted }: TextLessonProps) {
+export function TextLesson({ lesson, onComplete, isCompleted, isUpdatingProgress }: TextLessonProps) {
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="p-6 max-w-4xl mx-auto w-full">
@@ -26,7 +27,7 @@ export function TextLesson({ lesson, onComplete, isCompleted }: TextLessonProps)
             onClick={onComplete}
             variant={isCompleted ? "outline" : "default"}
             className="shrink-0"
-            disabled={isCompleted}
+            disabled={isCompleted || isUpdatingProgress}
           >
             <CheckCircle className="w-4 h-4 mr-2" />
             {isCompleted ? "Completed" : "Mark as Complete"}

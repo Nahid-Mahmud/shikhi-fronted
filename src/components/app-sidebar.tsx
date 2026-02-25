@@ -17,8 +17,7 @@ import {
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
 import { useGetMeQuery } from "@/redux/features/auth/auth.api";
-
-// ─── Role-based nav configs ────────────────────────────────────────────────
+import Link from "next/link";
 
 type NavItem = {
   title: string;
@@ -58,17 +57,10 @@ const adminNav: NavItem[] = [
 
 const instructorNav: NavItem[] = [
   {
-    title: "Dashboard",
-    url: "/instructor",
-    icon: LayoutDashboard,
-    isActive: true,
-    items: [{ title: "Overview", url: "/instructor" }],
-  },
-  {
     title: "My Courses",
-    url: "/instructor/my-courses",
+    url: "/instructor/",
     icon: LibraryBig,
-    items: [{ title: "All Courses", url: "/instructor/my-courses" }],
+    items: [{ title: "All Courses", url: "/instructor/" }],
   },
   {
     title: "Create Course",
@@ -111,7 +103,7 @@ function AppBrand() {
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton size="lg" asChild>
-          <a href="/">
+          <Link href="/">
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <GraduationCap className="size-4" />
             </div>
@@ -119,7 +111,7 @@ function AppBrand() {
               <span className="truncate font-semibold">TalentPull</span>
               <span className="truncate text-xs text-muted-foreground">Learning Platform</span>
             </div>
-          </a>
+          </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>

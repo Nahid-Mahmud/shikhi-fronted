@@ -13,6 +13,7 @@ export type CourseQueryParams = {
 
 export const courseApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     createCourse: builder.mutation<TResponse<ICourse>, any>({
       query: (data) => ({
         url: "/courses",
@@ -36,6 +37,19 @@ export const courseApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Course"],
     }),
+
+    // get instructor specific courses 
+
+    getCoursesForInstructor: builder.query<TResponse<ICourse[]>, void>({
+      query: () => ({
+        url: "/courses/instructors",
+        method: "GET",
+      }),
+      providesTags: ["Course"],
+    }),
+
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     updateCourse: builder.mutation<TResponse<ICourse>, { id: string; body: any }>({
       query: ({ id, body }) => ({
         url: `/courses/${id}`,
@@ -70,4 +84,5 @@ export const {
   useUpdateCourseMutation,
   useDeleteCourseMutation,
   useChangeCourseStatusMutation,
+  useGetCoursesForInstructorQuery,
 } = courseApi;

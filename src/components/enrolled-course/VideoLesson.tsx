@@ -11,15 +11,17 @@ interface VideoLessonProps {
   lesson: ILesson;
   onComplete?: () => void;
   isCompleted?: boolean;
+  isUpdatingProgress?: boolean;
 }
 
-export function VideoLesson({ lesson, onComplete, isCompleted }: VideoLessonProps) {
+export function VideoLesson({ lesson, onComplete, isCompleted, isUpdatingProgress }: VideoLessonProps) {
   return (
     <div className="flex flex-col h-full overflow-y-auto">
       <div className="aspect-video bg-black w-full relative">
-        {(ReactPlayer as any) && (
+        {ReactPlayer && (
           <ReactPlayer
-            url={lesson.videoUrl}
+            // url={lesson.videoUrl}
+            src={lesson.videoUrl}
             controls
             width="100%"
             height="100%"
@@ -34,7 +36,7 @@ export function VideoLesson({ lesson, onComplete, isCompleted }: VideoLessonProp
             onClick={onComplete}
             variant={isCompleted ? "outline" : "default"}
             className="shrink-0"
-            disabled={isCompleted}
+            disabled={isCompleted || isUpdatingProgress}
           >
             <CheckCircle className="w-4 h-4 mr-2" />
             {isCompleted ? "Completed" : "Mark as Complete"}

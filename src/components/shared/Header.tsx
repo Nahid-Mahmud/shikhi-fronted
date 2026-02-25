@@ -1,31 +1,16 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { useGetMeQuery } from "@/redux/features/auth/auth.api";
+import { Menu, User as UserIcon, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, LogOut, User as UserIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useGetMeQuery, useLogoutMutation } from "@/redux/features/auth/auth.api";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { data: userData, isLoading: isUserLoading } = useGetMeQuery();
-  const [logout] = useLogoutMutation();
-  const router = useRouter();
 
   const user = userData?.data;
-
-  const handleLogout = async () => {
-    try {
-      await logout().unwrap();
-      toast.success("Logged out successfully");
-      router.push("/auth/login");
-    } catch (error) {
-      console.error("Logout failed:", error);
-      toast.error("Logout failed. Please try again.");
-    }
-  };
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -34,6 +19,21 @@ export function Header() {
     { href: "/contact", label: "Contact" },
     { href: "/courses", label: "Courses" },
   ];
+
+  const calculateDashboardLink = (role: string) => {
+    switch (role) {
+      case "student":
+        return "/student";
+      case "instructor":
+        return "/instructor";
+      case "admin":
+        return "/admin";
+      case "super_admin":
+        return "/admin";
+      default:
+        return "/";
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -75,15 +75,12 @@ export function Header() {
                   </div>
                   <span className="hidden lg:inline-block">{user.name}</span>
                 </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="text-muted-foreground hover:text-red-500"
+                <Link
+                  href={calculateDashboardLink(user.role)}
+                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
-                  <LogOut size={18} className="mr-2" />
-                  Logout
-                </Button>
+                  Dashboard
+                </Link>
               </div>
             ) : (
               <>
@@ -129,14 +126,22 @@ export function Header() {
                     <UserIcon size={18} />
                     <span>{user.name}</span>
                   </Link>
-                  <Button
+                  {/* <Button
                     variant="outline"
                     onClick={handleLogout}
                     className="w-full justify-start text-red-500 border-red-500/20 hover:bg-red-50"
                   >
                     <LogOut size={18} className="mr-2" />
                     Logout
-                  </Button>
+                  </Button> */}
+                  {/* link to go dashboard */}
+                  <Link
+                    href={calculateDashboardLink(user.role)}
+                    className="block px-2 py-2 text-sm font-medium text-muted-foreground hover:text-red-500 hover:bg-secondary rounded transition-colors"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
                 </>
               ) : (
                 <>
